@@ -1,3 +1,63 @@
+
+/* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Primary colors */
+  --primary-color: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-dark: #3730a3;
+  --primary-bg-light: rgba(79, 70, 229, 0.1);
+
+  /* Secondary colors */
+  --secondary-color: #10b981;
+  --secondary-light: #34d399;
+  --secondary-dark: #059669;
+  --secondary-bg-light: rgba(16, 185, 129, 0.1);
+
+  /* Background and surfaces */
+  --background-color: #f9fafb;
+  --surface-color: #ffffff;
+
+  /* Text colors */
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #9ca3af;
+
+  /* Functional colors */
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --success-color: #22c55e;
+
+  /* Message colors */
+  --user-message-bg: rgba(79, 70, 229, 0.1);
+  --user-message-color: #4F46E5;
+  --ai-message-bg: white;
+  --ai-message-color: #10B981;
+  --user-avatar-bg: #4F46E5;
+  --ai-avatar-bg: #10B981;
+
+  /* Border colors */
+  --border-color: #e5e7eb;
+
+  /* Shadow styles */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+}
 .App {
   text-align: center;
 }

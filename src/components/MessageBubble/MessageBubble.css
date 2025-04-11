@@ -1,0 +1,206 @@
+/* src/components/MessageBubble/MessageBubble.css */
+
+.message-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-3);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Avatar Styles */
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.ai-avatar {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.message-avatar svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Message Content Styles */
+.message-content {
+    flex: 1;
+    max-width: calc(100% - 58px); /* Account for avatar width + gap */
+}
+
+.message-sender {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-1);
+}
+
+.user-message .message-sender {
+    color: var(--primary-color);
+}
+
+.ai-message .message-sender {
+    color: var(--secondary-color);
+}
+
+.message-text {
+    padding: var(--spacing-3) var(--spacing-4);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 2px;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.user-message .message-text {
+    background-color: rgba(79, 70, 229, 0.1);
+    color: var(--text-primary);
+    border-bottom-right-radius: 0;
+}
+
+.ai-message .message-text {
+    background-color: white;
+    color: var(--text-primary);
+    border-bottom-left-radius: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Root variables for message bubble colors */
+:root {
+    --user-message-bg: rgba(79, 70, 229, 0.1);
+    --user-message-color: #4F46E5;
+    --ai-message-bg: white;
+    --ai-message-color: #10B981;
+    --user-avatar-bg: #4F46E5;
+    --ai-avatar-bg: #10B981;
+}
+
+/* Updated colors using the root variables */
+.user-message .message-text {
+    background-color: var(--user-message-bg);
+    color: var(--text-primary);
+    border-bottom-right-radius: 0;
+}
+
+.ai-message .message-text {
+    background-color: var(--ai-message-bg);
+    color: var(--text-primary);
+    border-bottom-left-radius: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-sender {
+    color: var(--user-message-color);
+}
+
+.ai-message .message-sender {
+    color: var(--ai-message-color);
+}
+
+.user-avatar {
+    background-color: var(--user-avatar-bg);
+    color: white;
+}
+
+.ai-avatar {
+    background-color: var(--ai-avatar-bg);
+    color: white;
+}
+
+/* Message Time */
+.message-time {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    text-align: right;
+    margin-top: 2px;
+}
+
+/* Markdown Styling */
+.message-text p {
+    margin-bottom: var(--spacing-2);
+}
+
+.message-text p:last-child {
+    margin-bottom: 0;
+}
+
+.message-text pre {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: var(--spacing-3);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: var(--spacing-2) 0;
+}
+
+.message-text code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9em;
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.message-text pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.message-text a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.message-text ul, .message-text ol {
+    margin-left: var(--spacing-4);
+    margin-bottom: var(--spacing-2);
+}
+
+.message-text blockquote {
+    border-left: 4px solid rgba(0, 0, 0, 0.1);
+    padding-left: var(--spacing-3);
+    margin-left: var(--spacing-2);
+    color: var(--text-secondary);
+}
+
+/* Responsive design for MessageBubble */
+@media (max-width: 768px) {
+    .message-content {
+        max-width: calc(100% - 50px);
+    }
+
+    .message-text {
+        padding: var(--spacing-2) var(--spacing-3);
+    }
+
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .message-avatar svg {
+        width: 16px;
+        height: 16px;
+    }
+}

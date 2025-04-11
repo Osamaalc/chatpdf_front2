@@ -1,5 +1,4 @@
 // src/services/firebaseService.js
-import { initializeApp } from 'firebase/app';
 import {
     getAuth,
     createUserWithEmailAndPassword,
@@ -18,63 +17,53 @@ import {
     setDoc,
     getDoc,
     updateDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    orderBy
 } from 'firebase/firestore';
+import { app, db, auth } from '../firebase/config';
 
-// تكوين Firebase - يجب استبداله بإعدادات مشروعك الخاص
-const firebaseConfig = {
-    apiKey: "AIzaSyArvdxauwjBtUdnhlp8tqGISK7AxfAzpeg",
-    authDomain: "chatpdf-9b3cf.firebaseapp.com",
-    projectId: "chatpdf-9b3cf",
-    storageBucket: "chatpdf-9b3cf.appspot.com", // تم تصحيح قيمة storageBucket
-    messagingSenderId: "832708294441",
-    appId: "1:832708294441:web:8c2d7397ec26142af8e938",
-    measurementId: "G-ZJDNFNZYL5"
-};
-
-// تهيئة Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// تعيين استمرارية الجلسة
+// Setting persistent sessions
 setPersistence(auth, browserLocalPersistence)
     .then(() => {
-        console.log("تم تعيين استمرارية الجلسة بنجاح");
+        console.log("Session persistence set successfully");
     })
     .catch((error) => {
-        console.error("خطأ في تعيين استمرارية الجلسة:", error);
+        console.error("Error setting session persistence:", error);
     });
 
 /**
- * إنشاء حساب مستخدم جديد
- * @param {string} email - البريد الإلكتروني للمستخدم
- * @param {string} password - كلمة المرور
- * @param {string} name - اسم المستخدم
- * @returns {Promise} - البيانات الناتجة عن التسجيل
+ * Register a new user
+ * @param {string} email - User's email
+ * @param {string} password - User's password
+ * @param {string} name - User's name
+ * @returns {Promise} - Registration result data
  */
 export const registerUser = async (email, password, name) => {
-    console.log("بدء عملية التسجيل في firebaseService:", { email, name });
+    console.log("Starting registration process in firebaseService:", { email, name });
 
     try {
-        // إنشاء المستخدم مع Firebase Authentication
+        // Create user with Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("تم إنشاء المستخدم بنجاح:", user.uid);
+        console.log("User created successfully:", user.uid);
 
-        // تحديث الملف الشخصي مع الاسم
+        // Update profile with name
         await updateProfile(user, { displayName: name });
-        console.log("تم تحديث الملف الشخصي مع الاسم:", name);
+        console.log("Profile updated with name:", name);
 
-        // إرسال بريد تأكيد (اختياري)
+        // Send verification email (optional)
         try {
             await sendEmailVerification(user);
-            console.log("تم إرسال بريد التحقق");
+            console.log("Verification email sent");
         } catch (emailError) {
-            console.warn("لم يتم إرسال بريد التحقق:", emailError);
-            // نستمر بالعملية حتى لو فشل إرسال البريد
+            console.warn("Failed to send verification email:", emailError);
+            // Continue with the process even if email sending fails
         }
 
-        // إنشاء وثيقة المستخدم في Firestore
+        // Create user document in Firestore
         try {
             const userData = {
                 uid: user.uid,
@@ -85,14 +74,14 @@ export const registerUser = async (email, password, name) => {
                 role: 'user',
             };
 
-            // تحاول إنشاء وثيقة في Firestore ولكن لا تنتظر النتيجة
+            // Try to create a document in Firestore without awaiting the result
             setDoc(doc(db, "users", user.uid), userData)
-                .then(() => console.log("تم إنشاء وثيقة المستخدم في Firestore"))
-                .catch(err => console.error("خطأ في إنشاء وثيقة المستخدم:", err));
+                .then(() => console.log("User document created in Firestore"))
+                .catch(err => console.error("Error creating user document:", err));
 
-            // تسجيل خروج المستخدم لضمان تجربة نظيفة للتسجيل
+            // Sign out the user to ensure a clean registration experience
             await signOut(auth);
-            console.log("تم تسجيل الخروج تلقائيًا بعد التسجيل");
+            console.log("Automatically signed out after registration");
 
             return {
                 success: true,
@@ -103,11 +92,11 @@ export const registerUser = async (email, password, name) => {
                 }
             };
         } catch (firestoreError) {
-            console.error("خطأ في إنشاء وثيقة المستخدم:", firestoreError);
+            console.error("Error creating user document:", firestoreError);
 
-            // تسجيل خروج المستخدم حتى إذا فشلت عملية Firestore
+            // Sign out user even if Firestore operation fails
             await signOut(auth);
-            console.log("تم تسجيل الخروج تلقائيًا بعد التسجيل (مع خطأ في Firestore)");
+            console.log("Automatically signed out after registration (with Firestore error)");
 
             return {
                 success: true,
@@ -125,31 +114,31 @@ export const registerUser = async (email, password, name) => {
 };
 
 /**
- * تسجيل دخول المستخدم
- * @param {string} email - البريد الإلكتروني للمستخدم
- * @param {string} password - كلمة المرور
- * @returns {Promise} - بيانات المستخدم وتوكن JWT
+ * Log in a user
+ * @param {string} email - User's email
+ * @param {string} password - User's password
+ * @returns {Promise} - User data and JWT token
  */
 export const loginUser = async (email, password) => {
-    console.log("بدء عملية تسجيل الدخول في firebaseService:", { email });
+    console.log("Starting login process in firebaseService:", { email });
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        console.log("تم تسجيل الدخول بنجاح:", user.uid);
+        console.log("Login successful:", user.uid);
 
-        // الحصول على JWT token
+        // Get JWT token
         const token = await user.getIdToken();
-        console.log("تم الحصول على token بنجاح");
+        console.log("Token obtained successfully");
 
-        // تحديث آخر تسجيل دخول (غير متزامن لتجنب تأخير استجابة المستخدم)
+        // Update last login (asynchronously to avoid delaying user response)
         updateDoc(doc(db, "users", user.uid), {
             lastLogin: new Date().toISOString()
         })
-            .then(() => console.log("تم تحديث آخر تسجيل دخول"))
-            .catch(error => console.warn("تعذر تحديث آخر تسجيل دخول:", error));
+            .then(() => console.log("Last login updated"))
+            .catch(error => console.warn("Failed to update last login:", error));
 
-        // تحاول الحصول على بيانات المستخدم من Firestore ولكن ترجع البيانات الأساسية أولاً
+        // Get basic user data from Auth first
         const basicUserData = {
             uid: user.uid,
             email: user.email,
@@ -157,23 +146,23 @@ export const loginUser = async (email, password) => {
             emailVerified: user.emailVerified
         };
 
-        // محاولة الحصول على المزيد من البيانات من Firestore بشكل غير متزامن
+        // Try to get more data from Firestore asynchronously
         getDoc(doc(db, "users", user.uid))
             .then(userDoc => {
                 if (userDoc.exists()) {
-                    console.log("تم الحصول على بيانات إضافية للمستخدم من Firestore");
+                    console.log("Additional user data obtained from Firestore");
                 } else {
-                    console.log("لا توجد بيانات إضافية للمستخدم في Firestore، سيتم إنشاء وثيقة جديدة");
-                    // إنشاء وثيقة جديدة إذا لم تكن موجودة
+                    console.log("No additional user data in Firestore, creating new document");
+                    // Create new document if it doesn't exist
                     setDoc(doc(db, "users", user.uid), {
                         ...basicUserData,
                         createdAt: new Date().toISOString(),
                         lastLogin: new Date().toISOString(),
                         role: 'user',
-                    }).catch(err => console.error("خطأ في إنشاء وثيقة المستخدم الناقصة:", err));
+                    }).catch(err => console.error("Error creating missing user document:", err));
                 }
             })
-            .catch(error => console.warn("خطأ في الحصول على بيانات المستخدم من Firestore:", error));
+            .catch(error => console.warn("Error getting user data from Firestore:", error));
 
         return {
             user: basicUserData,
@@ -186,14 +175,14 @@ export const loginUser = async (email, password) => {
 };
 
 /**
- * تسجيل خروج المستخدم
- * @returns {Promise} - تأكيد نجاح العملية
+ * Log out the current user
+ * @returns {Promise} - Confirmation of success
  */
 export const logoutUser = async () => {
     try {
-        console.log("بدء عملية تسجيل الخروج");
+        console.log("Starting logout process");
         await signOut(auth);
-        console.log("تم تسجيل الخروج بنجاح");
+        console.log("Logout successful");
         return { success: true };
     } catch (error) {
         console.error("Error signing out:", error);
@@ -202,32 +191,32 @@ export const logoutUser = async () => {
 };
 
 /**
- * الحصول على المستخدم الحالي
- * @returns {Promise} - بيانات المستخدم إن وجد
+ * Get the current user
+ * @returns {Promise} - User data if exists
  */
 export const getCurrentUser = async () => {
     return new Promise((resolve, reject) => {
-        console.log("بدء الحصول على المستخدم الحالي");
+        console.log("Starting to get current user");
 
-        // يمكن التحقق فوراً من المستخدم الحالي قبل إعداد المستمع
+        // Can check current user immediately before setting up listener
         const currentUser = auth.currentUser;
-        console.log("المستخدم الحالي (قبل المستمع):", currentUser ? currentUser.uid : "غير مسجل");
+        console.log("Current user (before listener):", currentUser ? currentUser.uid : "not logged in");
 
-        // إذا لم يكن هناك مستخدم حالي، نعيد null فوراً
+        // If no current user, return null immediately
         if (!currentUser) {
-            console.log("لا يوجد مستخدم مسجل حاليًا");
+            console.log("No user currently logged in");
             resolve(null);
             return;
         }
 
-        // إذا كان هناك مستخدم حالي، نحاول الحصول على بياناته من Firestore
+        // If there is a current user, try to get their data from Firestore
         try {
             getDoc(doc(db, "users", currentUser.uid))
                 .then(userDoc => {
                     const userData = userDoc.exists() ? userDoc.data() : null;
-                    console.log("تم الحصول على بيانات المستخدم من Firestore:", userData ? "نجاح" : "لا توجد بيانات");
+                    console.log("Got user data from Firestore:", userData ? "success" : "no data");
 
-                    // حتى إذا لم تكن هناك بيانات في Firestore، نرجع البيانات الأساسية
+                    // Even if there's no data in Firestore, return basic data
                     resolve({
                         uid: currentUser.uid,
                         email: currentUser.email,
@@ -237,8 +226,8 @@ export const getCurrentUser = async () => {
                     });
                 })
                 .catch(error => {
-                    console.error("خطأ في الحصول على بيانات المستخدم من Firestore:", error);
-                    // في حالة الخطأ، نرجع البيانات الأساسية
+                    console.error("Error getting user data from Firestore:", error);
+                    // In case of error, return basic data
                     resolve({
                         uid: currentUser.uid,
                         email: currentUser.email,
@@ -247,7 +236,7 @@ export const getCurrentUser = async () => {
                     });
                 });
         } catch (error) {
-            console.error("خطأ عام في الحصول على بيانات المستخدم:", error);
+            console.error("General error getting user data:", error);
             resolve({
                 uid: currentUser.uid,
                 email: currentUser.email,
@@ -259,9 +248,39 @@ export const getCurrentUser = async () => {
 };
 
 /**
- * تحديث ملف المستخدم الشخصي
- * @param {Object} userData - البيانات المراد تحديثها
- * @returns {Promise} - البيانات المحدثة للمستخدم
+ * Get user files from Firestore
+ * @param {string} userId - User ID
+ * @returns {Promise<Array>} - List of user files
+ */
+export const getUserFiles = async (userId) => {
+    if (!userId) {
+        console.log("No user ID provided for fetching files");
+        return [];
+    }
+
+    try {
+        const filesRef = collection(db, `users/${userId}/files`);
+        const filesQuery = query(filesRef, orderBy('uploaded_at', 'desc'));
+        const filesSnapshot = await getDocs(filesQuery);
+
+        const files = filesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            uploaded_at: doc.data().uploaded_at?.toDate() || new Date()
+        }));
+
+        console.log(`Retrieved ${files.length} files for user ${userId}`);
+        return files;
+    } catch (error) {
+        console.error("Error fetching user files:", error);
+        throw error;
+    }
+};
+
+/**
+ * Update user profile
+ * @param {Object} userData - Data to update
+ * @returns {Promise} - Updated user data
  */
 export const updateUserProfile = async (userData) => {
     try {
@@ -271,15 +290,15 @@ export const updateUserProfile = async (userData) => {
             throw new Error("User not authenticated");
         }
 
-        // تحديث البيانات في Firebase Authentication إذا كان هناك تغيير في الاسم
+        // Update data in Firebase Authentication if name is changed
         if (userData.name) {
             await updateProfile(currentUser, { displayName: userData.name });
         }
 
-        // تحديث البيانات في Firestore
+        // Update data in Firestore
         const userRef = doc(db, "users", currentUser.uid);
 
-        // استبعاد البيانات الحساسة من التحديث
+        // Exclude sensitive data from update
         const { password, ...updatableData } = userData;
 
         await updateDoc(userRef, {
@@ -287,7 +306,7 @@ export const updateUserProfile = async (userData) => {
             updatedAt: new Date().toISOString()
         });
 
-        // إعادة البيانات المحدثة
+        // Return updated data
         const updatedDoc = await getDoc(userRef);
         return updatedDoc.data();
     } catch (error) {
@@ -297,9 +316,9 @@ export const updateUserProfile = async (userData) => {
 };
 
 /**
- * طلب إعادة تعيين كلمة المرور
- * @param {string} email - البريد الإلكتروني للمستخدم
- * @returns {Promise} - تأكيد إرسال البريد
+ * Request password reset
+ * @param {string} email - User's email
+ * @returns {Promise} - Confirmation of email sent
  */
 export const requestPasswordReset = async (email) => {
     try {
@@ -312,35 +331,31 @@ export const requestPasswordReset = async (email) => {
 };
 
 /**
- * ترجمة أكواد أخطاء Firebase إلى رسائل مفهومة
- * @param {string} errorCode - كود الخطأ من Firebase
- * @returns {string} - رسالة الخطأ المترجمة
+ * Translate Firebase error codes to understandable messages
+ * @param {string} errorCode - Firebase error code
+ * @returns {string} - Translated error message
  */
 const translateFirebaseError = (errorCode) => {
     const errorMessages = {
-        'auth/email-already-in-use': 'هذا البريد الإلكتروني مستخدم بالفعل.',
-        'auth/weak-password': 'كلمة المرور ضعيفة جدًا، يجب أن تكون على الأقل 6 أحرف.',
-        'auth/user-not-found': 'لا يوجد حساب بهذا البريد الإلكتروني.',
-        'auth/wrong-password': 'كلمة المرور غير صحيحة.',
-        'auth/invalid-email': 'البريد الإلكتروني غير صالح.',
-        'auth/user-disabled': 'تم تعطيل هذا الحساب.',
-        'auth/too-many-requests': 'تم تقييد الوصول بسبب محاولات متكررة. يرجى المحاولة لاحقًا.',
-        'auth/operation-not-allowed': 'هذه العملية غير مسموح بها.',
-        'auth/network-request-failed': 'فشل في الاتصال بالشبكة. يرجى التحقق من اتصالك بالإنترنت.',
-        'auth/invalid-credential': 'بيانات الاعتماد غير صالحة.',
-        'auth/invalid-verification-code': 'رمز التحقق غير صالح.',
-        'auth/invalid-verification-id': 'معرف التحقق غير صالح.',
-        'auth/captcha-check-failed': 'فشل في التحقق من captcha.',
-        'auth/missing-verification-code': 'رمز التحقق مفقود.',
-        'auth/missing-verification-id': 'معرف التحقق مفقود.',
+        'auth/email-already-in-use': 'This email is already in use.',
+        'auth/weak-password': 'Password is too weak, it must be at least 6 characters.',
+        'auth/user-not-found': 'No account exists with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/too-many-requests': 'Access has been temporarily disabled due to many failed attempts. Please try again later.',
+        'auth/operation-not-allowed': 'This operation is not allowed.',
+        'auth/network-request-failed': 'Network failure. Please check your internet connection.',
+        'auth/invalid-credential': 'Invalid credentials.',
+        'auth/invalid-verification-code': 'Invalid verification code.',
+        'auth/invalid-verification-id': 'Invalid verification ID.',
+        'auth/captcha-check-failed': 'Captcha verification failed.',
+        'auth/missing-verification-code': 'Verification code is missing.',
+        'auth/missing-verification-id': 'Verification ID is missing.',
     };
 
     return errorMessages[errorCode] || null;
 };
-
-// تصدير الكائنات
-export const firebaseAuth = auth;
-export const firebaseFirestore = db;
 
 export default {
     registerUser,
@@ -349,6 +364,5 @@ export default {
     getCurrentUser,
     updateUserProfile,
     requestPasswordReset,
-    firebaseAuth,
-    firebaseFirestore
+    getUserFiles
 };
