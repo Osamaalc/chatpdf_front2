@@ -8,6 +8,12 @@ const Footer = () => {
     const currentYear = new Date().getFullYear();
     const { darkMode } = useContext(ThemeContext);
 
+    const handleNewsletterSubmit = (e) => {
+        e.preventDefault();
+        // Handle newsletter submission logic here
+        alert('Thank you for subscribing to our newsletter!');
+    };
+
     return (
         <footer className={`footer ${darkMode ? 'dark' : ''}`}>
             <div className="footer-wave">
@@ -33,11 +39,11 @@ const Footer = () => {
                             <span className="footer-logo-premium">ELITE</span>
                         </Link>
                         <p className="footer-description">
-                            Experience the future of PDF interaction. Advanced AI-powered document analysis and conversation.
+                            Experience the future of PDF interaction with powerful AI-driven document analysis and conversation. Transform the way you work with documents.
                         </p>
                         <div className="footer-cta">
                             <Link to="/upgrade" className="footer-cta-button">
-                                Try Elite Free
+                                Start Free Trial
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -62,7 +68,7 @@ const Footer = () => {
                         <ul className="footer-links">
                             <li><Link to="/docs" className="footer-link">Documentation</Link></li>
                             <li><Link to="/guides" className="footer-link">Guides</Link></li>
-                            <li><Link to="/api" className="footer-link">API</Link></li>
+                            <li><Link to="/api" className="footer-link">API Reference</Link></li>
                             <li><Link to="/blog" className="footer-link">Blog</Link></li>
                             <li><Link to="/changelog" className="footer-link">Changelog</Link></li>
                         </ul>
@@ -71,26 +77,27 @@ const Footer = () => {
                     <div className="footer-section links-section">
                         <h3 className="footer-heading">Company</h3>
                         <ul className="footer-links">
-                            <li><Link to="/about" className="footer-link">About</Link></li>
+                            <li><Link to="/about" className="footer-link">About Us</Link></li>
                             <li><Link to="/contact" className="footer-link">Contact</Link></li>
                             <li><Link to="/careers" className="footer-link">Careers</Link></li>
-                            <li><Link to="/privacy" className="footer-link">Privacy</Link></li>
-                            <li><Link to="/terms" className="footer-link">Terms</Link></li>
+                            <li><Link to="/privacy" className="footer-link">Privacy Policy</Link></li>
+                            <li><Link to="/terms" className="footer-link">Terms of Service</Link></li>
                         </ul>
                     </div>
 
                     <div className="footer-section newsletter-section">
                         <h3 className="footer-heading">Stay Updated</h3>
-                        <p className="newsletter-text">Subscribe to our newsletter for the latest updates and features.</p>
-                        <form className="newsletter-form">
+                        <p className="newsletter-text">Subscribe to our newsletter to receive the latest updates, tips, and exclusive offers.</p>
+                        <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
                             <div className="newsletter-input-group">
                                 <input
                                     type="email"
                                     placeholder="Enter your email"
                                     className="newsletter-input"
                                     aria-label="Email for newsletter"
+                                    required
                                 />
-                                <button type="submit" className="newsletter-button">
+                                <button type="submit" className="newsletter-button" aria-label="Subscribe">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <line x1="22" y1="2" x2="11" y2="13"></line>
                                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

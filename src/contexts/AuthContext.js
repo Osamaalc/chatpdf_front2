@@ -1,6 +1,14 @@
 // src/contexts/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from '../services/api';
+import {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getCurrentUser,
+    updateUserProfile,
+    requestPasswordReset,
+    firebaseAuth
+} from '../services/firebaseService';
 
 const AuthContext = createContext();
 
@@ -13,158 +21,232 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [initialAuthCheckDone, setInitialAuthCheckDone] = useState(false);
 
-    // Check if user is already logged in (token in localStorage)
+    // Check authentication state when app loads
     useEffect(() => {
-        const checkAuthStatus = async () => {
-            const token = localStorage.getItem('token');
+        console.log("Initializing auth state listener");
 
-            if (token) {
-                try {
-                    // Verify token with backend
-                    const response = await api.get('/auth/me');
-                    setCurrentUser(response.data);
+        // First check for locally stored token
+        const token = localStorage.getItem('token');
+        if (token) {
+            console.log("Found locally stored token");
+        }
+
+        const unsubscribe = firebaseAuth.onAuthStateChanged(async (user) => {
+            try {
+                console.log("Auth state change:", user ? "logged in" : "not logged in");
+
+                if (user) {
+                    // We have a logged in user, load at least basic user data
+                    const basicUserData = {
+                        uid: user.uid,
+                        email: user.email,
+                        name: user.displayName,
+                        emailVerified: user.emailVerified
+                    };
+
+                    // Set authentication state immediately to avoid delay
+                    setCurrentUser(basicUserData);
                     setIsAuthenticated(true);
-                } catch (err) {
-                    // Invalid token, clear it
-                    console.error('Auth verification failed:', err);
+
+                    // Try to update the token
+                    try {
+                        const newToken = await user.getIdToken();
+                        localStorage.setItem('token', newToken);
+                        console.log("Updated locally stored token");
+                    } catch (tokenError) {
+                        console.warn("Failed to update token:", tokenError);
+                    }
+
+                    // Try to get additional data from Firestore (asynchronously)
+                    getCurrentUser()
+                        .then(userData => {
+                            if (userData && userData !== basicUserData) {
+                                console.log("Updated user data with Firestore data");
+                                setCurrentUser(userData);
+                            }
+                        })
+                        .catch(err => {
+                            console.warn("Failed to load additional Firestore data:", err);
+                        });
+                } else {
+                    // No logged in user
+                    console.log("No logged in user - removing locally stored token");
                     localStorage.removeItem('token');
                     setCurrentUser(null);
                     setIsAuthenticated(false);
                 }
+            } catch (err) {
+                console.error("Auth verification failed:", err);
+                setError(err.message);
+                // Even with an error, try to set authentication state if user exists
+                if (firebaseAuth.currentUser) {
+                    setIsAuthenticated(true);
+                    setCurrentUser({
+                        uid: firebaseAuth.currentUser.uid,
+                        email: firebaseAuth.currentUser.email,
+                        name: firebaseAuth.currentUser.displayName
+                    });
+                } else {
+                    setIsAuthenticated(false);
+                    setCurrentUser(null);
+                }
+            } finally {
+                console.log("Auth state check complete - loading=false");
+                setLoading(false);
+                setInitialAuthCheckDone(true);
             }
-
+        }, (error) => {
+            console.error("Error in auth state listener:", error);
             setLoading(false);
-        };
+            setError(error.message);
+            setInitialAuthCheckDone(true);
+        });
 
-        checkAuthStatus();
+        // Clean up subscriber when component unmounts
+        return () => {
+            console.log("Cleaning up auth state listener");
+            unsubscribe();
+        };
     }, []);
 
     // Login function
     const login = async (email, password) => {
         try {
+            console.log("Starting login process");
             setError(null);
             setLoading(true);
 
-            const response = await api.post('/auth/login', { email, password });
+            const response = await loginUser(email, password);
+            console.log("Login successful:", response ? "yes" : "no");
 
-            // Save token to localStorage
-            localStorage.setItem('token', response.data.token);
+            if (response && response.token) {
+                // Store token
+                localStorage.setItem('token', response.token);
+                console.log("Token stored locally");
 
-            // Set user data and auth state
-            setCurrentUser(response.data.user);
-            setIsAuthenticated(true);
+                // Set user data and authentication state directly
+                setCurrentUser(response.user);
+                setIsAuthenticated(true);
+            } else {
+                console.warn("No token or user returned from loginUser");
+            }
 
-            return response.data;
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        } finally {
+            // End loading state
             setLoading(false);
+
+            return response;
+        } catch (err) {
+            console.error("Login error:", err);
+            setError(err.message);
+            setLoading(false);
+            throw err;
         }
     };
 
     // Signup function
     const signup = async (email, password, name) => {
         try {
+            console.log("Starting registration process in AuthContext");
             setError(null);
             setLoading(true);
 
-            const response = await api.post('/auth/signup', { email, password, name });
+            const response = await registerUser(email, password, name);
+            console.log("Registration completed successfully:", response ? "yes" : "no");
 
-            // Save token to localStorage
-            localStorage.setItem('token', response.data.token);
-
-            // Set user data and auth state
-            setCurrentUser(response.data.user);
-            setIsAuthenticated(true);
-
-            return response.data;
-        } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Signup failed. Please try again.';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        } finally {
+            // End loading state after registration
             setLoading(false);
+
+            return response;
+        } catch (err) {
+            console.error("Error in AuthContext:", err);
+            setError(err.message);
+            setLoading(false);
+            throw err; // Re-throw the error to be handled in RegisterPage
         }
     };
 
     // Logout function
     const logout = async () => {
         try {
-            // Call logout endpoint if needed
-            // await api.post('/auth/logout');
+            console.log("Starting logout process");
+            setLoading(true);
+            await logoutUser();
 
-            // Clear token and user data
+            // Remove token and user data
             localStorage.removeItem('token');
             setCurrentUser(null);
             setIsAuthenticated(false);
+            console.log("Logout successful");
         } catch (err) {
             console.error('Logout error:', err);
-            // Still clear local data even if API call fails
-            localStorage.removeItem('token');
-            setCurrentUser(null);
-            setIsAuthenticated(false);
+            setError(err.message);
+        } finally {
+            console.log("Logout process ended");
+            setLoading(false);
         }
     };
 
     // Update user profile
     const updateProfile = async (userData) => {
         try {
+            console.log("Starting profile update process");
             setError(null);
             setLoading(true);
 
-            const response = await api.put('/auth/profile', userData);
+            const updatedUser = await updateUserProfile(userData);
+            console.log("Profile update:", updatedUser ? "successful" : "failed");
 
-            setCurrentUser(response.data);
+            if (updatedUser) {
+                setCurrentUser(prev => ({ ...prev, ...updatedUser }));
+            }
 
-            return response.data;
+            return updatedUser;
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Failed to update profile. Please try again.';
-            setError(errorMessage);
-            throw new Error(errorMessage);
+            console.error("Profile update error:", err);
+            setError(err.message);
+            throw err;
         } finally {
+            console.log("Profile update process ended");
             setLoading(false);
         }
     };
 
-    // Password reset request
-    const requestPasswordReset = async (email) => {
+    // Request password reset
+    const requestReset = async (email) => {
         try {
+            console.log("Starting password reset request process");
             setError(null);
             setLoading(true);
 
-            const response = await api.post('/auth/reset-password', { email });
-
-            return response.data;
+            const response = await requestPasswordReset(email);
+            console.log("Password reset request sent successfully");
+            return response;
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Failed to request password reset. Please try again.';
-            setError(errorMessage);
-            throw new Error(errorMessage);
+            console.error("Password reset request error:", err);
+            setError(err.message);
+            throw err;
         } finally {
+            console.log("Password reset request process ended");
             setLoading(false);
         }
     };
 
-    // Confirm password reset with token and new password
-    const confirmPasswordReset = async (token, newPassword) => {
+    // Check token validity
+    const checkTokenValidity = async () => {
         try {
-            setError(null);
-            setLoading(true);
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return false;
+            }
 
-            const response = await api.post('/auth/reset-password/confirm', {
-                token,
-                password: newPassword
-            });
+            // Can develop this function to perform a real token check
 
-            return response.data;
+            return isAuthenticated;
         } catch (err) {
-            const errorMessage = err.response?.data?.message || 'Failed to reset password. Please try again.';
-            setError(errorMessage);
-            throw new Error(errorMessage);
-        } finally {
-            setLoading(false);
+            console.error("Token validity check error:", err);
+            return false;
         }
     };
 
@@ -173,12 +255,13 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         error,
+        initialAuthCheckDone,
         login,
         signup,
         logout,
         updateProfile,
-        requestPasswordReset,
-        confirmPasswordReset
+        requestReset,
+        checkTokenValidity
     };
 
     return (
