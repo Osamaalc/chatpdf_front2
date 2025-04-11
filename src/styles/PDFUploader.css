@@ -1,0 +1,221 @@
+/* src/styles/PDFUploader.css */
+.pdf-uploader {
+    width: 100%;
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.home-page.dark .pdf-uploader {
+    background-color: rgba(31, 41, 55, 0.7);
+    border-color: var(--gray-700);
+}
+
+.pdf-uploader.dragging {
+    border-color: var(--primary-color);
+    background-color: rgba(99, 102, 241, 0.05);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.home-page.dark .pdf-uploader.dragging {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.pdf-uploader.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    border-color: var(--gray-400);
+}
+
+.uploader-input {
+    display: none;
+}
+
+.uploader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    width: 100%;
+    cursor: pointer;
+}
+
+.uploader-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.pdf-uploader:hover .uploader-icon {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2));
+    transform: scale(1.05);
+}
+
+.home-page.dark .uploader-icon {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2));
+    color: var(--primary-light);
+}
+
+.uploader-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.uploader-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.home-page.dark .uploader-title {
+    color: var(--gray-50);
+}
+
+.uploader-description {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+}
+
+.home-page.dark .uploader-description {
+    color: var(--gray-400);
+}
+
+.uploader-file-types {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.home-page.dark .uploader-file-types {
+    color: var(--gray-500);
+}
+
+.uploader-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--error-color);
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.uploader-file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: var(--radius-lg);
+    margin-top: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.home-page.dark .uploader-file-preview {
+    background-color: rgba(31, 41, 55, 0.8);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.file-info svg {
+    color: var(--primary-color);
+}
+
+.home-page.dark .file-info svg {
+    color: var(--primary-light);
+}
+
+.file-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-page.dark .file-name {
+    color: var(--gray-200);
+}
+
+.file-size {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+.home-page.dark .file-size {
+    color: var(--gray-400);
+}
+
+.remove-file-btn {
+    background: none;
+    border: none;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+    color: var(--error-color);
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.remove-file-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* تخصيص ظهور المكون في الصفحة الرئيسية */
+.uploader-container {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.custom-uploader {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}

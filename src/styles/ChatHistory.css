@@ -1,0 +1,121 @@
+/* src/styles/ChatHistory.css */
+.chat-history {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.date-header {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: #f9fafb;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-left-color 0.2s ease;
+}
+
+.chat-item:hover {
+    background-color: #f4f7fd;
+    border-left-color: #2563eb;
+}
+
+.document-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background-color: #f0f4ff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+}
+
+.document-icon svg {
+    width: 20px;
+    height: 20px;
+    color: #2563eb;
+}
+
+.chat-details {
+    flex: 1;
+    min-width: 0; /* Prevents flex item from overflowing */
+}
+
+.file-name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-preview {
+    font-size: 0.8125rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* Active chat item */
+.chat-item.active {
+    background-color: #eef2ff;
+    border-left-color: #4f46e5;
+}
+
+.chat-item.active .document-icon {
+    background-color: #e0e7ff;
+}
+
+.chat-item.active .document-icon svg {
+    color: #4f46e5;
+}
+
+.chat-item.active .file-name {
+    color: #4f46e5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chat-item {
+        padding: 0.75rem 1rem;
+    }
+
+    .date-header {
+        padding: 0.5rem 1rem;
+    }
+
+    .document-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .document-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+}

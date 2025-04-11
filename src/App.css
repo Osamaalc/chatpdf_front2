@@ -36,3 +36,34 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add these styles to src/styles/index.css */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Adjust when sidebar is present */
+@media (min-width: 1024px) {
+  .main-container {
+    margin-left: 320px; /* Match sidebar width */
+  }
+
+  /* Don't apply margin on pages without sidebar */
+  .no-sidebar .main-container {
+    margin-left: 0;
+  }
+
+  /* Don't apply margin to header and footer */
+  .header, .footer {
+    margin-left: 0;
+  }
+}
